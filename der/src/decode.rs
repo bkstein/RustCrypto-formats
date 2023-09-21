@@ -26,6 +26,13 @@ pub trait Decode<'a>: Sized {
         let result = Self::decode(&mut reader)?;
         reader.finish(result)
     }
+
+    /// Parse `Self` from the provided BER-encoded byte slice.
+    fn from_ber(bytes: &'a [u8]) -> Result<Self> {
+        let mut reader = SliceReader::new_ber(bytes)?;
+        let result = Self::decode(&mut reader)?;
+        reader.finish(result)
+    }
 }
 
 impl<'a, T> Decode<'a> for T

@@ -15,6 +15,10 @@ use crate::{
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
+// Used for reading indefinite length data
+const EOC_LENGTH: Length = Length::new(2);
+const EOC_MARKER: &[u8; 2] = &[0u8; 2];
+
 /// Reader trait which reads DER-encoded input.
 pub trait Reader<'r>: Sized {
     /// Get the length of the input.
@@ -31,6 +35,9 @@ pub trait Reader<'r>: Sized {
 
     /// Get the position within the buffer.
     fn position(&self) -> Length;
+
+    /// Are we parsing BER?
+    fn is_parsing_ber(&self) -> bool;
 
     /// Attempt to read data borrowed directly from the input as a slice,
     /// updating the internal cursor position.
@@ -56,7 +63,14 @@ pub trait Reader<'r>: Sized {
 
     /// Decode a value which impls the [`Decode`] trait.
     fn decode<T: Decode<'r>>(&mut self) -> Result<T> {
-        T::decode(self).map_err(|e| e.nested(self.position()))
+        let decoded = T::decode(self).map_err(|e| e.nested(self.position()));
+
+        if decoded.is_ok() && self.is_parsing_ber() {
+            // Eventually consume eoc octets
+            self.read_eoc()?;
+        }
+
+        decoded
     }
 
     /// Return an error with the given [`ErrorKind`], annotating it with
@@ -67,7 +81,12 @@ pub trait Reader<'r>: Sized {
 
     /// Finish decoding, returning the given value if there is no
     /// remaining data, or an error otherwise
-    fn finish<T>(self, value: T) -> Result<T> {
+    fn finish<T>(&mut self, value: T) -> Result<T> {
+        if self.is_parsing_ber() {
+            // Eventually consume eoc octets
+            self.read_eoc()?;
+        }
+
         if !self.is_finished() {
             Err(ErrorKind::TrailingData {
                 decoded: self.position(),
@@ -139,6 +158,18 @@ pub trait Reader<'r>: Sized {
         let mut bytes = vec![0u8; usize::try_from(len)?];
         self.read_into(&mut bytes)?;
         Ok(bytes)
+    }
+
+    /// Read an end-of-content value and verify it.
+    fn read_eoc(&mut self) -> Result<()> {
+        let next = self.peek_byte();
+        if next == Some(0) {
+            let eoc = self.read_slice(EOC_LENGTH)?;
+            if eoc.ne(EOC_MARKER) {
+                return Err(ErrorKind::EndOfContent.at(self.position()))
+            }
+        }
+        Ok(())
     }
 
     /// Get the number of bytes still remaining in the buffer.

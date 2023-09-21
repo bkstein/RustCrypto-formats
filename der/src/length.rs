@@ -212,6 +212,7 @@ impl<'a> Decode<'a> for Length {
             // Note: per X.690 Section 8.1.3.6.1 the byte 0x80 encodes indefinite
             // lengths, which are not allowed in DER, so disallow that byte.
             len if len < INDEFINITE_LENGTH_OCTET => Ok(len.into()),
+            INDEFINITE_LENGTH_OCTET if reader.is_parsing_ber() => Ok(Self::ZERO),
             INDEFINITE_LENGTH_OCTET => Err(ErrorKind::IndefiniteLength.into()),
             // 1-4 byte variable-sized length prefix
             tag @ 0x81..=0x84 => {

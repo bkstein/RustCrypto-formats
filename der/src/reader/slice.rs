@@ -13,6 +13,9 @@ pub struct SliceReader<'a> {
 
     /// Position within the decoded slice.
     position: Length,
+
+    /// Parse in BER mode
+    is_parsing_ber: bool,
 }
 
 impl<'a> SliceReader<'a> {
@@ -22,6 +25,17 @@ impl<'a> SliceReader<'a> {
             bytes: BytesRef::new(bytes)?,
             failed: false,
             position: Length::ZERO,
+            is_parsing_ber: false,
+        })
+    }
+
+    /// Create a new slice reader for the given byte slice.
+    pub fn new_ber(bytes: &'a [u8]) -> Result<Self> {
+        Ok(Self {
+            bytes: BytesRef::new(bytes)?,
+            failed: false,
+            position: Length::ZERO,
+            is_parsing_ber: true,
         })
     }
 
@@ -41,6 +55,9 @@ impl<'a> SliceReader<'a> {
     pub fn is_failed(&self) -> bool {
         self.failed
     }
+
+    /// Are we parsing BER?
+    pub fn is_parsing_ber(&self) -> bool { self.is_parsing_ber } 
 
     /// Obtain the remaining bytes in this slice reader from the current cursor
     /// position.
@@ -75,6 +92,8 @@ impl<'a> Reader<'a> for SliceReader<'a> {
         self.position
     }
 
+    fn is_parsing_ber(&self) -> bool { self.is_parsing_ber }
+
     fn read_slice(&mut self, len: Length) -> Result<&'a [u8]> {
         if self.is_failed() {
             return Err(self.error(ErrorKind::Failed));
@@ -82,6 +101,8 @@ impl<'a> Reader<'a> for SliceReader<'a> {
 
         match self.remaining()?.get(..len.try_into()?) {
             Some(result) => {
+                // TODO bk: remove
+                std::println!("SliceReader::read_slice();        len: {len}, position: {}", self.position);
                 self.position = (self.position + len)?;
                 Ok(result)
             }
@@ -97,10 +118,17 @@ impl<'a> Reader<'a> for SliceReader<'a> {
             return Err(self.error(ErrorKind::Failed));
         }
 
-        T::decode(self).map_err(|e| {
+        let decoded = T::decode(self).map_err(|e| {
             self.failed = true;
             e.nested(self.position)
-        })
+        });
+
+        if decoded.is_ok() && self.is_parsing_ber() {
+            // Eventually consume eoc octets
+            self.read_eoc()?;
+        }
+
+        decoded
     }
 
     fn error(&mut self, kind: ErrorKind) -> Error {
@@ -108,7 +136,12 @@ impl<'a> Reader<'a> for SliceReader<'a> {
         kind.at(self.position)
     }
 
-    fn finish<T>(self, value: T) -> Result<T> {
+    fn finish<T>(&mut self, value: T) -> Result<T> {
+        if self.is_parsing_ber() {
+            // Eventually consume eoc octets
+            self.read_eoc()?;
+        }
+
         if self.is_failed() {
             Err(ErrorKind::Failed.at(self.position))
         } else if !self.is_finished() {
