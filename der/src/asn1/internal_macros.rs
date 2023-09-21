@@ -30,7 +30,7 @@ macro_rules! impl_string_type {
             use super::*;
 
             use crate::{
-                ord::OrdIsValueOrd, BytesRef, DecodeValue, EncodeValue, Header, Length, Reader,
+                ord::OrdIsValueOrd, BytesRef, decode::Decode, DecodeValue, EncodeValue, Header, Length, Reader,
                 Result, Writer,
             };
             use core::{fmt, str};
@@ -48,8 +48,19 @@ macro_rules! impl_string_type {
             }
 
             impl<'__der: $($li),*, $($li),*> DecodeValue<'__der> for $type {
-                fn decode_value<R: Reader<'__der>>(reader: &mut R, header: Header) -> Result<Self> {
-                    Self::new(BytesRef::decode_value(reader, header)?.as_slice())
+                    fn decode_value<R: Reader<'__der>>(reader: &mut R, header: Header) -> Result<Self> {
+                    // TODO bk
+                    if header.length == Length::ZERO {
+                        // TODO: only reads a single string (not constructed)
+                        if !reader.is_parsing_ber() {
+                            Err(crate::ErrorKind::IndefiniteLength.into())
+                        } else {
+                            let header = Header::decode(reader)?;
+                            Self::new(BytesRef::decode_value(reader, header)?.as_slice())
+                        }
+                    } else {
+                        Self::new(BytesRef::decode_value(reader, header)?.as_slice())
+                    }
                 }
             }
 

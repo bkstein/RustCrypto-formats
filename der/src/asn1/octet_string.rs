@@ -55,13 +55,20 @@ impl AsRef<[u8]> for OctetStringRef<'_> {
 
 impl<'a> DecodeValue<'a> for OctetStringRef<'a> {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        // TODO bk:
-        // if reader.is_parsing_ber() {
-        //     Ok(())
-        // } else {
+        // TODO bk
+        if header.length == Length::ZERO {
+            // TODO: only reads a single value of a constructed OctetString
+            if !reader.is_parsing_ber() {
+                Err(ErrorKind::IndefiniteLength.into())
+            } else {
+                let header = Header::decode(reader)?;
+                let inner = BytesRef::decode_value(reader, header)?;
+                Ok(Self { inner })
+            }
+        } else {
             let inner = BytesRef::decode_value(reader, header)?;
             Ok(Self { inner })
-        // }
+        }
     }
 }
 
