@@ -242,8 +242,18 @@ mod allocating {
 
     impl<'a> DecodeValue<'a> for Any {
         fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-            let value = reader.read_vec(header.length)?;
-            Self::new(header.tag, value)
+            if header.length == Length::ZERO {
+                if !reader.is_parsing_ber() {
+                    Err(ErrorKind::IndefiniteLength.into())
+                } else {
+                    let header = Header::decode(reader)?;
+                    let value = reader.read_vec(header.length)?;
+                    Self::new(header.tag, value)
+                }
+            } else {
+                let value = reader.read_vec(header.length)?;
+                Self::new(header.tag, value)
+            }
         }
     }
 
