@@ -1,6 +1,9 @@
 //! ASN.1 `UTF8String` support.
 
-use crate::{asn1::AnyRef, ord::OrdIsValueOrd, EncodeValue, Error, FixedTag, Length, Result, StrRef, Tag, Writer, ErrorKind, Decode};
+use crate::{
+    asn1::AnyRef, ord::OrdIsValueOrd, Decode, EncodeValue, Error, ErrorKind, FixedTag, Length,
+    Result, StrRef, Tag, Writer,
+};
 use core::{fmt, ops::Deref, str};
 
 #[cfg(feature = "alloc")]
@@ -114,14 +117,20 @@ impl<'a> TryFrom<AnyRef<'a>> for String {
 #[cfg(feature = "alloc")]
 impl<'a> DecodeValue<'a> for String {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        // TODO bk
         if header.length == Length::ZERO {
-            // TODO: only reads a single value of a constructed OctetString
             if !reader.is_parsing_ber() {
                 Err(ErrorKind::IndefiniteLength.into())
             } else {
-                let header = Header::decode(reader)?;
-                Ok(String::from_utf8(reader.read_vec(header.length)?)?)
+                let mut decoded_string = String::new();
+                loop {
+                    let header = Header::decode(reader)?;
+                    decoded_string
+                        .push_str(String::from_utf8(reader.read_vec(header.length)?)?.as_str());
+                    if reader.read_eoc()? {
+                        break;
+                    }
+                }
+                Ok(decoded_string)
             }
         } else {
             Ok(String::from_utf8(reader.read_vec(header.length)?)?)

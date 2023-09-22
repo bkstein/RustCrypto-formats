@@ -161,15 +161,20 @@ pub trait Reader<'r>: Sized {
     }
 
     /// Read an end-of-content value and verify it.
-    fn read_eoc(&mut self) -> Result<()> {
+    /// Returns `Ok(true)`, if an eoc marker was read, `Ok(false)` if not and `Err()`, if an
+    /// invalid eoc marker was detected.
+    fn read_eoc(&mut self) -> Result<bool> {
         let next = self.peek_byte();
         if next == Some(0) {
             let eoc = self.read_slice(EOC_LENGTH)?;
             if eoc.ne(EOC_MARKER) {
-                return Err(ErrorKind::EndOfContent.at(self.position()))
+                Err(ErrorKind::EndOfContent.at(self.position()))
+            } else {
+                Ok(true)
             }
+        } else {
+            Ok(false)
         }
-        Ok(())
     }
 
     /// Get the number of bytes still remaining in the buffer.

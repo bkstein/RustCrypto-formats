@@ -17,7 +17,6 @@ pub struct NestedReader<'i, R> {
 impl<'i, 'r, R: Reader<'r>> NestedReader<'i, R> {
     /// Create a new nested reader which can read the given [`Length`].
     pub(crate) fn new(inner: &'i mut R, len: Length) -> Result<Self> {
-
         if len <= inner.remaining_len() {
             Ok(Self {
                 inner,
@@ -36,9 +35,6 @@ impl<'i, 'r, R: Reader<'r>> NestedReader<'i, R> {
     /// Move the position cursor the given length, returning an error if there
     /// isn't enough remaining data in the nested input.
     fn advance_position(&mut self, len: Length) -> Result<()> {
-        // TODO bk: remove
-        std::println!("NestedReader::advance_position(); len: {len}, position: {}, inner.position: {}", self.position, self.inner.position());
-
         let new_position = (self.position + len)?;
 
         if (new_position <= self.input_len) || self.inner.is_parsing_ber() {
@@ -63,7 +59,7 @@ impl<'i, 'r, R: Reader<'r>> Reader<'r> for NestedReader<'i, R> {
     /// parsing BER
     fn remaining_len(&self) -> Length {
         if self.is_parsing_ber() {
-            return self.inner.remaining_len()
+            return self.inner.remaining_len();
         }
 
         debug_assert!(self.position() <= self.input_len());
@@ -91,7 +87,9 @@ impl<'i, 'r, R: Reader<'r>> Reader<'r> for NestedReader<'i, R> {
         self.position
     }
 
-    fn is_parsing_ber(&self) -> bool { self.inner.is_parsing_ber() }
+    fn is_parsing_ber(&self) -> bool {
+        self.inner.is_parsing_ber()
+    }
 
     fn read_slice(&mut self, len: Length) -> Result<&'r [u8]> {
         self.advance_position(len)?;

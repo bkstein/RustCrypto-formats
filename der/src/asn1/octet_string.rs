@@ -55,9 +55,9 @@ impl AsRef<[u8]> for OctetStringRef<'_> {
 
 impl<'a> DecodeValue<'a> for OctetStringRef<'a> {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        // TODO bk
         if header.length == Length::ZERO {
-            // TODO: only reads a single value of a constructed OctetString
+            // Note: as this method is alloc-free, we can't assemble constructed octet strings.
+            // Thus, this method only only reads a single value of a constructed OctetString.
             if !reader.is_parsing_ber() {
                 Err(ErrorKind::IndefiniteLength.into())
             } else {
@@ -169,7 +169,23 @@ mod allocating {
 
     impl<'a> DecodeValue<'a> for OctetString {
         fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-            Self::new(reader.read_vec(header.length)?)
+            if header.length == Length::ZERO {
+                if !reader.is_parsing_ber() {
+                    Err(ErrorKind::IndefiniteLength.into())
+                } else {
+                    let mut decoded_octetstring: Vec<u8> = Vec::new();
+                    loop {
+                        let header = Header::decode(reader)?;
+                        decoded_octetstring.extend(reader.read_vec(header.length)?);
+                        if reader.read_eoc()? {
+                            break;
+                        }
+                    }
+                    Self::new(decoded_octetstring)
+                }
+            } else {
+                Self::new(reader.read_vec(header.length)?)
+            }
         }
     }
 
@@ -256,7 +272,8 @@ mod bytes {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use crate::asn1::{OctetStringRef, PrintableStringRef};
+    use crate::asn1::{OctetString, OctetStringRef, PrintableStringRef};
+    use crate::Decode;
 
     #[test]
     fn octet_string_decode_into() {
@@ -266,5 +283,18 @@ mod tests {
 
         let res = oct.decode_into::<PrintableStringRef<'_>>().unwrap();
         assert_eq!(AsRef::<str>::as_ref(&res), "hi");
+    }
+
+    #[test]
+    fn octet_string_decode() {
+        let der = b"\x04\x02\x68\x69";
+        OctetString::from_der(der).unwrap();
+    }
+
+    #[test]
+    fn octet_string_decode_indefinite_and_constructed() {
+        let der = b"\x24\x80\x04\x02\x68\x69\x00\x00";
+        let octet_string = OctetString::from_ber(der).unwrap();
+        assert_eq!(octet_string.as_ref(), &[0x68, 0x69]);
     }
 }

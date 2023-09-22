@@ -186,7 +186,9 @@ impl<'i> Reader<'i> for PemReader<'i> {
         self.position
     }
 
-    fn is_parsing_ber(&self) -> bool { false }
+    fn is_parsing_ber(&self) -> bool {
+        false
+    }
 
     fn read_slice(&mut self, _len: Length) -> Result<&'i [u8]> {
         // Can't borrow from PEM because it requires decoding

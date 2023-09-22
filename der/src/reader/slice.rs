@@ -57,7 +57,9 @@ impl<'a> SliceReader<'a> {
     }
 
     /// Are we parsing BER?
-    pub fn is_parsing_ber(&self) -> bool { self.is_parsing_ber } 
+    pub fn is_parsing_ber(&self) -> bool {
+        self.is_parsing_ber
+    }
 
     /// Obtain the remaining bytes in this slice reader from the current cursor
     /// position.
@@ -92,7 +94,9 @@ impl<'a> Reader<'a> for SliceReader<'a> {
         self.position
     }
 
-    fn is_parsing_ber(&self) -> bool { self.is_parsing_ber }
+    fn is_parsing_ber(&self) -> bool {
+        self.is_parsing_ber
+    }
 
     fn read_slice(&mut self, len: Length) -> Result<&'a [u8]> {
         if self.is_failed() {
@@ -101,8 +105,6 @@ impl<'a> Reader<'a> for SliceReader<'a> {
 
         match self.remaining()?.get(..len.try_into()?) {
             Some(result) => {
-                // TODO bk: remove
-                std::println!("SliceReader::read_slice();        len: {len}, position: {}", self.position);
                 self.position = (self.position + len)?;
                 Ok(result)
             }
