@@ -36,6 +36,9 @@ pub trait Reader<'r>: Sized {
     /// Get the position within the buffer.
     fn position(&self) -> Length;
 
+    /// Rewind cursor to a given position.
+    fn rewind(&mut self, len: Length) -> Result<()>;
+
     /// Are we parsing BER?
     fn is_parsing_ber(&self) -> bool;
 
@@ -200,4 +203,34 @@ pub trait Reader<'r>: Sized {
         let header_len = header.encoded_len()?;
         self.read_slice((header_len + header.length)?)
     }
-}
+
+    /// Parse a tlv and return its length. Don't move the reader's cursor.
+    /// This is required if the length is indefinite.
+    fn tlv_length(&mut self) -> Result<Length> {
+        let  start_position = self.position();
+
+        self.tlv_length_parse_to_end()?;
+
+        let length = self.position().saturating_sub(start_position);
+        self.rewind(start_position)?;
+        Ok(length)
+    }
+
+    /// Advance cursor to the end of a tlv. This method works for definite and (nested) indefinite
+    /// length values.
+    fn tlv_length_parse_to_end(&mut self) -> Result<()> {
+        let header = self.peek_header()?;
+        if header.length == Length::ZERO {
+            // indefinite length: value must be parsed
+            let _ = Header::decode(self)?;
+            self.tlv_length_parse_to_end()?;
+            if !self.read_eoc()? {
+                return Err(self.error(ErrorKind::EndOfContent));
+            }
+        } else {
+            // definite length: ff the reader's cursor
+            let _ = self.tlv_bytes()?;
+        }
+        Ok(())
+    }
+ }

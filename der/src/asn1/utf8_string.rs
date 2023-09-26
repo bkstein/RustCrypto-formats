@@ -124,6 +124,7 @@ impl<'a> DecodeValue<'a> for String {
                 let mut decoded_string = String::new();
                 loop {
                     let header = Header::decode(reader)?;
+                    header.tag.assert_eq(Self::TAG)?;
                     decoded_string
                         .push_str(String::from_utf8(reader.read_vec(header.length)?)?.as_str());
                     if reader.read_eoc()? {

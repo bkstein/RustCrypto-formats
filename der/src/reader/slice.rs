@@ -94,6 +94,16 @@ impl<'a> Reader<'a> for SliceReader<'a> {
         self.position
     }
 
+    fn rewind(&mut self, len: Length) -> Result<()> {
+        if len > self.input_len()
+        {
+            Err(self.error(ErrorKind::Overlength))
+        } else {
+            self.position = len;
+            Ok(())
+        }
+    }
+
     fn is_parsing_ber(&self) -> bool {
         self.is_parsing_ber
     }

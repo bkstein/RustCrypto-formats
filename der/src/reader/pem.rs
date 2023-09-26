@@ -186,6 +186,16 @@ impl<'i> Reader<'i> for PemReader<'i> {
         self.position
     }
 
+    fn rewind(&mut self, len: Length) -> Result<()> {
+        if len > self.input_len()
+        {
+            Err(self.error(ErrorKind::Overlength))
+        } else {
+            self.position = len;
+            Ok(())
+        }
+    }
+
     fn is_parsing_ber(&self) -> bool {
         false
     }

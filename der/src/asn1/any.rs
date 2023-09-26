@@ -246,9 +246,10 @@ mod allocating {
                 if !reader.is_parsing_ber() {
                     Err(ErrorKind::IndefiniteLength.into())
                 } else {
-                    let header = Header::decode(reader)?;
-                    let value = reader.read_vec(header.length)?;
-                    Self::new(header.tag, value)
+                    let tag = reader.peek_tag()?;
+                    let length = reader.tlv_length()?;
+                    let value = reader.read_vec(length)?;
+                    Self::new(tag, value)
                 }
             } else {
                 let value = reader.read_vec(header.length)?;

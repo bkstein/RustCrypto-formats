@@ -87,6 +87,16 @@ impl<'i, 'r, R: Reader<'r>> Reader<'r> for NestedReader<'i, R> {
         self.position
     }
 
+    fn rewind(&mut self, len: Length) -> Result<()> {
+        if len > self.input_len()
+        {
+            Err(self.error(ErrorKind::Overlength))
+        } else {
+            self.position = len;
+            Ok(())
+        }
+    }
+
     fn is_parsing_ber(&self) -> bool {
         self.inner.is_parsing_ber()
     }
