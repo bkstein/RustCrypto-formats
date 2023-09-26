@@ -95,8 +95,7 @@ impl<'a> Reader<'a> for SliceReader<'a> {
     }
 
     fn rewind(&mut self, len: Length) -> Result<()> {
-        if len > self.input_len()
-        {
+        if len > self.input_len() {
             Err(self.error(ErrorKind::Overlength))
         } else {
             self.position = len;

@@ -88,8 +88,7 @@ impl<'i, 'r, R: Reader<'r>> Reader<'r> for NestedReader<'i, R> {
     }
 
     fn rewind(&mut self, len: Length) -> Result<()> {
-        if len > self.input_len()
-        {
+        if len > self.input_len() {
             Err(self.error(ErrorKind::Overlength))
         } else {
             self.position = len;

@@ -1,6 +1,6 @@
+use der::{asn1::Any, Decode};
 #[cfg(feature = "derive")]
 use der::{Sequence, ValueOrd};
-use der::{asn1::Any, Decode};
 
 // Recursive expansion of Sequence macro
 // ======================================
@@ -78,7 +78,9 @@ fn test_parse_ber_string_indefinite_and_constructed() {
 #[test]
 fn test_parse_ber_any_indefinite() {
     //                ANY         SEQUENCE    INTEGER           EOC         EOC
-    let bytes_ber = &[0xa0, 0x80, 0x30, 0x80, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, ];
+    let bytes_ber = &[
+        0xa0, 0x80, 0x30, 0x80, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
+    ];
     let any = Any::from_ber(bytes_ber.as_slice()).unwrap();
     println!("ANY: {:x?}", any.value());
 }

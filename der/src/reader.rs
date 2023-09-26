@@ -207,7 +207,7 @@ pub trait Reader<'r>: Sized {
     /// Parse a tlv and return its length. Don't move the reader's cursor.
     /// This is required if the length is indefinite.
     fn tlv_length(&mut self) -> Result<Length> {
-        let  start_position = self.position();
+        let start_position = self.position();
 
         self.tlv_length_parse_to_end()?;
 
@@ -233,4 +233,4 @@ pub trait Reader<'r>: Sized {
         }
         Ok(())
     }
- }
+}
