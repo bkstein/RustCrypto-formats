@@ -117,7 +117,7 @@ impl<'a> TryFrom<AnyRef<'a>> for String {
 #[cfg(feature = "alloc")]
 impl<'a> DecodeValue<'a> for String {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        if header.length == Length::ZERO {
+        if header.length.is_indefinite() {
             if !reader.is_parsing_ber() {
                 Err(ErrorKind::IndefiniteLength.into())
             } else {
@@ -125,8 +125,10 @@ impl<'a> DecodeValue<'a> for String {
                 loop {
                     let header = Header::decode(reader)?;
                     header.tag.assert_eq(Self::TAG)?;
-                    decoded_string
-                        .push_str(String::from_utf8(reader.read_vec(header.length)?)?.as_str());
+                    decoded_string.push_str(
+                        String::from_utf8(reader.read_vec(Length::try_from(header.length)?)?)?
+                            .as_str(),
+                    );
                     if reader.read_eoc()? {
                         break;
                     }
@@ -134,7 +136,9 @@ impl<'a> DecodeValue<'a> for String {
                 Ok(decoded_string)
             }
         } else {
-            Ok(String::from_utf8(reader.read_vec(header.length)?)?)
+            Ok(String::from_utf8(
+                reader.read_vec(Length::try_from(header.length)?)?,
+            )?)
         }
     }
 }

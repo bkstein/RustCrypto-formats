@@ -16,7 +16,7 @@ const FALSE_OCTET: u8 = 0b00000000;
 
 impl<'a> DecodeValue<'a> for bool {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        if header.length != Length::ONE {
+        if Length::try_from(header.length)? != Length::ONE {
             return Err(reader.error(ErrorKind::Length { tag: Self::TAG }));
         }
 

@@ -212,7 +212,6 @@ impl<'a> Decode<'a> for Length {
             // Note: per X.690 Section 8.1.3.6.1 the byte 0x80 encodes indefinite
             // lengths, which are not allowed in DER, so disallow that byte.
             len if len < INDEFINITE_LENGTH_OCTET => Ok(len.into()),
-            INDEFINITE_LENGTH_OCTET if reader.is_parsing_ber() => Ok(Self::ZERO),
             INDEFINITE_LENGTH_OCTET => Err(ErrorKind::IndefiniteLength.into()),
             // 1-4 byte variable-sized length prefix
             tag @ 0x81..=0x84 => {
@@ -412,12 +411,31 @@ impl TryFrom<IndefiniteLength> for Length {
     }
 }
 
+impl TryFrom<&IndefiniteLength> for Length {
+    type Error = Error;
+
+    fn try_from(length: &IndefiniteLength) -> Result<Length> {
+        length.0.ok_or_else(|| ErrorKind::IndefiniteLength.into())
+    }
+}
+
+impl Sub for IndefiniteLength {
+    type Output = Result<Self>;
+
+    fn sub(self, other: IndefiniteLength) -> Result<Self> {
+        let len = Length::try_from(self)?.0;
+        len.checked_sub(Length::try_from(other)?.0)
+            .ok_or_else(|| ErrorKind::Overflow.into())
+            .and_then(|len| Ok(IndefiniteLength::new(Length::try_from(len)?)))
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
     use super::{IndefiniteLength, Length};
     use crate::{Decode, DerOrd, Encode, ErrorKind};
-    use core::cmp::Ordering;
+    use core::{cmp::Ordering, ops::Sub};
 
     #[test]
     fn decode() {
@@ -497,6 +515,16 @@ mod tests {
         assert_eq!(
             Length::try_from(0x10000u32).unwrap(),
             length.try_into().unwrap()
+        );
+    }
+
+    #[test]
+    fn indefinite_length_subtraction() {
+        assert_eq!(
+            IndefiniteLength::new(1u8)
+                .sub(IndefiniteLength::from(Length(1)))
+                .unwrap(),
+            IndefiniteLength::new(0u8)
         );
     }
 

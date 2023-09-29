@@ -20,7 +20,7 @@ macro_rules! impl_encoding_traits {
                     const UNSIGNED_HEADROOM: usize = 1;
 
                     let mut buf = [0u8; (Self::BITS as usize / 8) + UNSIGNED_HEADROOM];
-                    let max_length = u32::from(header.length) as usize;
+                    let max_length = u32::from(Length::try_from(header.length)?) as usize;
 
                     if max_length > buf.len() {
                         return Err(Self::TAG.non_canonical_error());
@@ -31,7 +31,7 @@ macro_rules! impl_encoding_traits {
                     let result = Self::from_be_bytes(decode_to_array(bytes)?);
 
                     // Ensure we compute the same encoded length as the original any value
-                    if header.length != result.value_len()? {
+                    if Length::try_from(header.length)? != result.value_len()? {
                         return Err(Self::TAG.non_canonical_error());
                     }
 
@@ -119,7 +119,7 @@ impl<'a> DecodeValue<'a> for UintRef<'a> {
         let result = Self::new(decode_to_slice(bytes)?)?;
 
         // Ensure we compute the same encoded length as the original any value.
-        if result.value_len()? != header.length {
+        if result.value_len()? != Length::try_from(header.length)? {
             return Err(Self::TAG.non_canonical_error());
         }
 
@@ -211,7 +211,7 @@ mod allocating {
             let result = Self::new(decode_to_slice(bytes.as_slice())?)?;
 
             // Ensure we compute the same encoded length as the original any value.
-            if result.value_len()? != header.length {
+            if result.value_len()? != Length::try_from(header.length)? {
                 return Err(Self::TAG.non_canonical_error());
             }
 

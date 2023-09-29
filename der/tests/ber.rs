@@ -1,9 +1,9 @@
-use der::{asn1::Any, Decode};
+use der::{asn1::Any, Decode, Tagged};
 #[cfg(feature = "derive")]
 use der::{Sequence, ValueOrd};
 
-// Recursive expansion of Sequence macro
-// ======================================
+// Recursive expansion of Sequence macro (thank you, `cargo expand`)
+// =================================================================
 // impl<'__der_lifetime> ::der::DecodeValue<'__der_lifetime> for Point {
 //     fn decode_value<R: ::der::Reader<'__der_lifetime>>(
 //         reader: &mut R,
@@ -41,7 +41,9 @@ struct Point {
 
 #[test]
 fn test_parse_der() {
-    let bytes_der = &[0x30, 0x06, 0x02, 0x01, 0x42, 0x02, 0x01, 0x43];
+    let bytes_der = &[
+        0x30, 0x0a, 0x02, 0x01, 0x42, 0x02, 0x01, 0x43, 0x0c, 0x02, 0x48, 0x69,
+    ];
     let _: Point = der::Decode::from_der(bytes_der.as_slice()).unwrap();
 }
 
@@ -77,10 +79,28 @@ fn test_parse_ber_string_indefinite_and_constructed() {
 
 #[test]
 fn test_parse_ber_any_indefinite() {
-    //                ANY         SEQUENCE    INTEGER           EOC         EOC
+    // Contained value has definite length
     let bytes_ber = &[
-        0xa0, 0x80, 0x30, 0x80, 0x02, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
+        //ANY       SEQUENCE    INTEGER           SET         EOC
+        0xa0, 0x80, 0x30, 0x05, 0x02, 0x01, 0x01, 0x31, 0x00, 0x00, 0x00,
     ];
     let any = Any::from_ber(bytes_ber.as_slice()).unwrap();
-    println!("ANY: {:x?}", any.value());
+    println!("ANY: Tag: {}, Value: {:02x?}", any.tag(), any.value());
+
+    // Contained value has indefinite length
+    // This is a real world example from EJBCA
+    let bytes_ber = &[
+        //ANY       SEQUENCE    INTEGER           SET         EOC         EOC
+        0xa0, 0x80, 0x30, 0x80, 0x02, 0x01, 0x01, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ];
+    let any = Any::from_ber(bytes_ber.as_slice()).unwrap();
+    println!("ANY: Tag: {}, Value: {:02x?}", any.tag(), any.value());
+
+    // Invalid (ANY contains more than one value)
+    let bytes_ber = &[
+        //ANY       SEQUENCE    INTEGER           SET         EOC         SEQUENCE    INTEGER           EOC
+        0xa0, 0x80, 0x30, 0x80, 0x02, 0x01, 0x01, 0x31, 0x00, 0x00, 0x00, 0x30, 0x03, 0x02, 0x01,
+        0x02, 0x00, 0x00,
+    ];
+    assert!(Any::from_ber(bytes_ber.as_slice()).is_err());
 }

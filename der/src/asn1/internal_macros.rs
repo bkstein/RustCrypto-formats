@@ -49,7 +49,7 @@ macro_rules! impl_string_type {
 
             impl<'__der: $($li),*, $($li),*> DecodeValue<'__der> for $type {
                     fn decode_value<R: Reader<'__der>>(reader: &mut R, header: Header) -> Result<Self> {
-                    if header.length == Length::ZERO {
+                    if Length::try_from(header.length)? == Length::ZERO {
                         // Only reads a single string (not constructed)
                         if !reader.is_parsing_ber() {
                             Err(crate::ErrorKind::IndefiniteLength.into())

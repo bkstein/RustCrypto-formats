@@ -143,7 +143,7 @@ impl Debug for Document {
 impl<'a> Decode<'a> for Document {
     fn decode<R: Reader<'a>>(reader: &mut R) -> Result<Document> {
         let header = reader.peek_header()?;
-        let length = (header.encoded_len()? + header.length)?;
+        let length = (header.encoded_len()? + Length::try_from(header.length)?)?;
         let bytes = reader.read_slice(length)?;
 
         Ok(Self {
@@ -320,7 +320,7 @@ fn decode_sequence<'a>(decoder: &mut SliceReader<'a>) -> Result<&'a [u8]> {
     let header = decoder.peek_header()?;
     header.tag.assert_eq(Tag::Sequence)?;
 
-    let len = (header.encoded_len()? + header.length)?;
+    let len = (header.encoded_len()? + Length::try_from(header.length)?)?;
     decoder.read_slice(len)
 }
 

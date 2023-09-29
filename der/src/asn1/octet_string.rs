@@ -55,7 +55,7 @@ impl AsRef<[u8]> for OctetStringRef<'_> {
 
 impl<'a> DecodeValue<'a> for OctetStringRef<'a> {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        if header.length == Length::ZERO {
+        if header.length.is_indefinite() {
             // Note: as this method is alloc-free, we can't assemble constructed octet strings.
             // Thus, this method only only reads a single value of a constructed OctetString.
             if !reader.is_parsing_ber() {
@@ -169,14 +169,15 @@ mod allocating {
 
     impl<'a> DecodeValue<'a> for OctetString {
         fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-            if header.length == Length::ZERO {
+            if header.length.is_indefinite() {
                 if !reader.is_parsing_ber() {
                     Err(ErrorKind::IndefiniteLength.into())
                 } else {
                     let mut decoded_octetstring: Vec<u8> = Vec::new();
                     loop {
                         let header = Header::decode(reader)?;
-                        decoded_octetstring.extend(reader.read_vec(header.length)?);
+                        decoded_octetstring
+                            .extend(reader.read_vec(Length::try_from(header.length)?)?);
                         if reader.read_eoc()? {
                             break;
                         }
@@ -184,7 +185,7 @@ mod allocating {
                     Self::new(decoded_octetstring)
                 }
             } else {
-                Self::new(reader.read_vec(header.length)?)
+                Self::new(reader.read_vec(Length::try_from(header.length)?)?)
             }
         }
     }

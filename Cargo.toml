@@ -30,7 +30,8 @@ members = [
 ]
 
 [profile.dev]
-opt-level = 2
+# TODO bk revert opt-level = 2
+opt-level = 0
 
 [patch.crates-io]
 # A global patch crates-io block is used to avoid cyclic dependencies errors

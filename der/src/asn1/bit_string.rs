@@ -123,7 +123,7 @@ impl<'a> DecodeValue<'a> for BitStringRef<'a> {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
         let header = Header {
             tag: header.tag,
-            length: (header.length - Length::ONE)?,
+            length: (header.length - Length::ONE.into())?,
         };
 
         let unused_bits = reader.read_byte()?;
@@ -310,7 +310,7 @@ mod allocating {
 
     impl<'a> DecodeValue<'a> for BitString {
         fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-            let inner_len = (header.length - Length::ONE)?;
+            let inner_len = Length::try_from((header.length - Length::ONE.into())?)?;
             let unused_bits = reader.read_byte()?;
             let inner = reader.read_vec(inner_len)?;
             Self::new(unused_bits, inner)

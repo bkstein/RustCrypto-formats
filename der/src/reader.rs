@@ -8,8 +8,8 @@ pub(crate) mod slice;
 pub(crate) use nested::NestedReader;
 
 use crate::{
-    asn1::ContextSpecific, Decode, DecodeValue, Encode, Error, ErrorKind, FixedTag, Header, Length,
-    Result, Tag, TagMode, TagNumber,
+    asn1::ContextSpecific, Decode, DecodeValue, Encode, Error, ErrorKind, FixedTag, Header,
+    IndefiniteLength, Length, Result, Tag, TagMode, TagNumber,
 };
 
 #[cfg(feature = "alloc")]
@@ -33,11 +33,14 @@ pub trait Reader<'r>: Sized {
     /// Does not modify the decoder's state.
     fn peek_header(&self) -> Result<Header>;
 
+    /// Peek next two bytes for an end-of-content marker.
+    fn peek_eoc(&self) -> Result<bool>;
+
     /// Get the position within the buffer.
     fn position(&self) -> Length;
 
     /// Rewind cursor to a given position.
-    fn rewind(&mut self, len: Length) -> Result<()>;
+    fn rewind(&mut self, position: Length) -> Result<()>;
 
     /// Are we parsing BER?
     fn is_parsing_ber(&self) -> bool;
@@ -146,11 +149,16 @@ pub trait Reader<'r>: Sized {
     }
 
     /// Read nested data of the given length.
-    fn read_nested<'n, T, F>(&'n mut self, len: Length, f: F) -> Result<T>
+    fn read_nested<'n, T, F>(&'n mut self, len: IndefiniteLength, f: F) -> Result<T>
     where
         F: FnOnce(&mut NestedReader<'n, Self>) -> Result<T>,
     {
-        let mut reader = NestedReader::new(self, len)?;
+        let input_length: Length = if len.is_definite() {
+            len.try_into()?
+        } else {
+            self.tlv_length()?
+        };
+        let mut reader = NestedReader::new(self, input_length)?;
         let ret = f(&mut reader)?;
         reader.finish(ret)
     }
@@ -201,7 +209,12 @@ pub trait Reader<'r>: Sized {
     fn tlv_bytes(&mut self) -> Result<&'r [u8]> {
         let header = self.peek_header()?;
         let header_len = header.encoded_len()?;
-        self.read_slice((header_len + header.length)?)
+        let tlv_len = if header.length.is_definite() {
+            (header_len + Length::try_from(header.length)?)?
+        } else {
+            self.tlv_length()?
+        };
+        self.read_slice(tlv_len)
     }
 
     /// Parse a tlv and return its length. Don't move the reader's cursor.
@@ -219,17 +232,21 @@ pub trait Reader<'r>: Sized {
     /// Advance cursor to the end of a tlv. This method works for definite and (nested) indefinite
     /// length values.
     fn tlv_length_parse_to_end(&mut self) -> Result<()> {
-        let header = self.peek_header()?;
-        if header.length == Length::ZERO {
+        let mut header = self.peek_header()?;
+        if header.length.is_indefinite() {
             // indefinite length: value must be parsed
             let _ = Header::decode(self)?;
             self.tlv_length_parse_to_end()?;
-            if !self.read_eoc()? {
-                return Err(self.error(ErrorKind::EndOfContent));
-            }
+            self.read_eoc()?;
         } else {
             // definite length: ff the reader's cursor
-            let _ = self.tlv_bytes()?;
+            while header.length.is_definite() {
+                let _ = self.tlv_bytes()?;
+                if self.peek_eoc()? {
+                    break;
+                }
+                header = self.peek_header()?;
+            }
         }
         Ok(())
     }

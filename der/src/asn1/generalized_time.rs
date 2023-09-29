@@ -78,7 +78,7 @@ impl_any_conversions!(GeneralizedTime);
 
 impl<'a> DecodeValue<'a> for GeneralizedTime {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        if Self::LENGTH != usize::try_from(header.length)? {
+        if Self::LENGTH != usize::try_from(Length::try_from(header.length)?)? {
             return Err(Self::TAG.value_error());
         }
 

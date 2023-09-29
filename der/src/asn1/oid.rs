@@ -13,11 +13,11 @@ impl<'a> DecodeValue<'a> for ObjectIdentifier {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
         let mut buf = [0u8; ObjectIdentifier::MAX_SIZE];
         let slice = buf
-            .get_mut(..header.length.try_into()?)
+            .get_mut(..Length::try_from(header.length)?.try_into()?)
             .ok_or_else(|| Self::TAG.length_error())?;
 
         let actual_len = reader.read_into(slice)?.len();
-        debug_assert_eq!(actual_len, header.length.try_into()?);
+        debug_assert_eq!(actual_len, Length::try_from(header.length)?.try_into()?);
         Ok(Self::from_bytes(slice)?)
     }
 }

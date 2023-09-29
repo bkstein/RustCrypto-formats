@@ -90,6 +90,12 @@ impl<'a> Reader<'a> for SliceReader<'a> {
         Header::decode(&mut self.clone())
     }
 
+    fn peek_eoc(&self) -> Result<bool> {
+        let mut buf = [0u8; 2];
+        self.clone().read_into(&mut buf)?;
+        Ok(buf == [0u8, 0])
+    }
+
     fn position(&self) -> Length {
         self.position
     }
@@ -176,7 +182,7 @@ impl<'a> Reader<'a> for SliceReader<'a> {
 #[allow(clippy::unwrap_used, clippy::panic)]
 mod tests {
     use super::SliceReader;
-    use crate::{Decode, ErrorKind, Length, Reader, Tag};
+    use crate::{Decode, ErrorKind, IndefiniteLength, Length, Reader, Tag};
     use hex_literal::hex;
 
     // INTEGER: 42
@@ -253,7 +259,7 @@ mod tests {
 
         let header = reader.peek_header().unwrap();
         assert_eq!(header.tag, Tag::Integer);
-        assert_eq!(header.length, Length::ONE);
+        assert_eq!(header.length, IndefiniteLength::from(Length::ONE));
         assert_eq!(reader.position(), Length::ZERO); // Position unchanged
     }
 }

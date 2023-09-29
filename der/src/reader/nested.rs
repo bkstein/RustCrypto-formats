@@ -83,6 +83,14 @@ impl<'i, 'r, R: Reader<'r>> Reader<'r> for NestedReader<'i, R> {
         }
     }
 
+    fn peek_eoc(&self) -> Result<bool> {
+        if self.is_finished() {
+            Err(Error::incomplete(self.offset()))
+        } else {
+            self.inner.peek_eoc()
+        }
+    }
+
     fn position(&self) -> Length {
         self.position
     }

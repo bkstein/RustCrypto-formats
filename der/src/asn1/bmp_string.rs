@@ -91,7 +91,7 @@ impl AsRef<[u8]> for BmpString {
 
 impl<'a> DecodeValue<'a> for BmpString {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        Self::from_ucs2(reader.read_vec(header.length)?)
+        Self::from_ucs2(reader.read_vec(Length::try_from(header.length)?)?)
     }
 }
 

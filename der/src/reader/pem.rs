@@ -182,6 +182,16 @@ impl<'i> Reader<'i> for PemReader<'i> {
         }
     }
 
+    fn peek_eoc(&self) -> Result<bool> {
+        if self.is_finished() {
+            Err(Error::incomplete(self.offset()))
+        } else {
+            let mut buf = [0u8; 2];
+            self.clone().read_into(&mut buf)?;
+            Ok(buf == [0u8, 0])
+        }
+    }
+
     fn position(&self) -> Length {
         self.position
     }

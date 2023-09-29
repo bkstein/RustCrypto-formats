@@ -13,7 +13,7 @@ impl_any_conversions!(Null);
 
 impl<'a> DecodeValue<'a> for Null {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        if header.length.is_zero() {
+        if Length::try_from(header.length)?.is_zero() {
             Ok(Null)
         } else {
             Err(reader.error(ErrorKind::Length { tag: Self::TAG }))

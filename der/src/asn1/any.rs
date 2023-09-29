@@ -64,10 +64,7 @@ impl<'a> AnyRef<'a> {
             return Err(self.tag.unexpected_error(None));
         }
 
-        let header = Header {
-            tag: self.tag,
-            length: self.value.len(),
-        };
+        let header = Header::new(self.tag, self.value.len())?;
 
         let mut decoder = SliceReader::new(self.value())?;
         let result = T::decode_value(&mut decoder, header)?;
@@ -242,17 +239,16 @@ mod allocating {
 
     impl<'a> DecodeValue<'a> for Any {
         fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-            if header.length == Length::ZERO {
+            if header.length.is_indefinite() {
                 if !reader.is_parsing_ber() {
                     Err(ErrorKind::IndefiniteLength.into())
                 } else {
                     let tag = reader.peek_tag()?;
-                    let length = reader.tlv_length()?;
-                    let value = reader.read_vec(length)?;
+                    let value = reader.tlv_bytes()?;
                     Self::new(tag, value)
                 }
             } else {
-                let value = reader.read_vec(header.length)?;
+                let value = reader.read_vec(header.length.try_into()?)?;
                 Self::new(header.tag, value)
             }
         }

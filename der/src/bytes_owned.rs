@@ -54,7 +54,9 @@ impl AsRef<[u8]> for BytesOwned {
 
 impl<'a> DecodeValue<'a> for BytesOwned {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        reader.read_vec(header.length).and_then(Self::new)
+        reader
+            .read_vec(Length::try_from(header.length)?)
+            .and_then(Self::new)
     }
 }
 
