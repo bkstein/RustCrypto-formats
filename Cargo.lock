@@ -307,7 +307,7 @@ dependencies = [
 
 [[package]]
 name = "cms"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "aes",
  "cbc",
@@ -1469,7 +1469,7 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "spki"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "arbitrary",
  "base64ct",
@@ -1812,7 +1812,7 @@ dependencies = [
 
 [[package]]
 name = "x509-cert"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "arbitrary",
  "const-oid 0.9.5",

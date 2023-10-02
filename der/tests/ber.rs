@@ -96,11 +96,19 @@ fn test_parse_ber_any_indefinite() {
     let any = Any::from_ber(bytes_ber.as_slice()).unwrap();
     println!("ANY: Tag: {}, Value: {:02x?}", any.tag(), any.value());
 
-    // Invalid (ANY contains more than one value)
+    #[rustfmt::skip]
     let bytes_ber = &[
-        //ANY       SEQUENCE    INTEGER           SET         EOC         SEQUENCE    INTEGER           EOC
-        0xa0, 0x80, 0x30, 0x80, 0x02, 0x01, 0x01, 0x31, 0x00, 0x00, 0x00, 0x30, 0x03, 0x02, 0x01,
-        0x02, 0x00, 0x00,
+        0xa0, 0x80, // ANY (indefinite length)
+          0x30, 0x80, // SEQUENCE (indefinite length)
+            0x02, 0x01, 0x01, // INTEGER
+            0x31, 0x00, // SET
+            0xa0, 0x80, // ANY  (indefinite length)
+              0x30, 0x0b, // SET (definite length)
+                0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x01, // OBJECT IDENTIFIER
+            0x00, 0x00, // EOC
+          0x00, 0x00, // EOC
+        0x00, 0x00, // EOC
     ];
-    assert!(Any::from_ber(bytes_ber.as_slice()).is_err());
+    let any = Any::from_ber(bytes_ber.as_slice()).unwrap();
+    println!("ANY: Tag: {}, Value: {:02x?}", any.tag(), any.value());
 }

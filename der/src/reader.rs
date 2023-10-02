@@ -232,20 +232,18 @@ pub trait Reader<'r>: Sized {
     /// Advance cursor to the end of a tlv. This method works for definite and (nested) indefinite
     /// length values.
     fn tlv_length_parse_to_end(&mut self) -> Result<()> {
-        let mut header = self.peek_header()?;
-        if header.length.is_indefinite() {
-            // indefinite length: value must be parsed
-            let _ = Header::decode(self)?;
-            self.tlv_length_parse_to_end()?;
-            self.read_eoc()?;
-        } else {
-            // definite length: ff the reader's cursor
-            while header.length.is_definite() {
+        loop {
+            let header = self.peek_header()?;
+            if header.length.is_indefinite() {
+                // indefinite length: value must be parsed
+                let _ = Header::decode(self)?;
+                self.tlv_length_parse_to_end()?;
+                self.read_eoc()?;
+            } else {
                 let _ = self.tlv_bytes()?;
-                if self.peek_eoc()? {
-                    break;
-                }
-                header = self.peek_header()?;
+            }
+            if self.peek_eoc()? || self.is_finished() {
+                break;
             }
         }
         Ok(())
