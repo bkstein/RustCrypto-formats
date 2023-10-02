@@ -299,7 +299,7 @@ version = "0.2.0"
 dependencies = [
  "const-oid 0.9.5",
  "crmf",
- "der 0.7.8",
+ "der 0.8.0",
  "hex-literal 0.4.1",
  "spki",
  "x509-cert",
@@ -313,7 +313,7 @@ dependencies = [
  "cbc",
  "cipher",
  "const-oid 0.9.5",
- "der 0.7.8",
+ "der 0.8.0",
  "ecdsa",
  "getrandom",
  "hex-literal 0.4.1",
@@ -403,7 +403,7 @@ version = "0.2.0"
 dependencies = [
  "cms",
  "const-oid 0.9.5",
- "der 0.7.8",
+ "der 0.8.0",
  "spki",
  "x509-cert",
 ]
@@ -436,14 +436,6 @@ name = "der"
 version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fffa369a668c8af7dbf8b5e56c9f744fbd399949ed171606040001947de40b1c"
-dependencies = [
- "arbitrary",
- "const-oid 0.9.5",
- "der_derive",
- "flagset",
- "pem-rfc7468",
- "zeroize",
-]
 
 [[package]]
 name = "der"
@@ -741,7 +733,7 @@ dependencies = [
 name = "gss-api"
 version = "0.1.0"
 dependencies = [
- "der 0.7.8",
+ "der 0.8.0",
  "hex-literal 0.4.1",
  "spki",
  "x509-cert",
@@ -980,7 +972,7 @@ name = "pkcs1"
 version = "0.7.5"
 dependencies = [
  "const-oid 0.9.5",
- "der 0.7.8",
+ "der 0.8.0",
  "hex-literal 0.4.1",
  "pkcs8",
  "spki",
@@ -993,7 +985,7 @@ version = "0.0.0"
 dependencies = [
  "cms",
  "const-oid 0.9.5",
- "der 0.7.8",
+ "der 0.8.0",
  "digest",
  "hex-literal 0.3.4",
  "pkcs5",
@@ -1012,7 +1004,7 @@ version = "0.7.1"
 dependencies = [
  "aes",
  "cbc",
- "der 0.7.8",
+ "der 0.8.0",
  "des",
  "hex-literal 0.4.1",
  "pbkdf2",
@@ -1026,7 +1018,7 @@ dependencies = [
 name = "pkcs7"
 version = "0.4.1"
 dependencies = [
- "der 0.7.8",
+ "der 0.8.0",
  "hex-literal 0.4.1",
  "spki",
  "x509-cert",
@@ -1036,7 +1028,7 @@ dependencies = [
 name = "pkcs8"
 version = "0.10.2"
 dependencies = [
- "der 0.7.8",
+ "der 0.8.0",
  "hex-literal 0.4.1",
  "pkcs5",
  "rand_core",
@@ -1329,7 +1321,7 @@ name = "sec1"
 version = "0.7.3"
 dependencies = [
  "base16ct",
- "der 0.7.8",
+ "der 0.8.0",
  "generic-array",
  "hex-literal 0.4.1",
  "pkcs8",
@@ -1481,7 +1473,7 @@ version = "0.7.2"
 dependencies = [
  "arbitrary",
  "base64ct",
- "der 0.7.8",
+ "der 0.8.0",
  "hex-literal 0.4.1",
  "sha2",
  "tempfile",
@@ -1824,7 +1816,7 @@ version = "0.2.4"
 dependencies = [
  "arbitrary",
  "const-oid 0.9.5",
- "der 0.7.8",
+ "der 0.8.0",
  "ecdsa",
  "hex-literal 0.4.1",
  "p256",
@@ -1853,7 +1845,7 @@ name = "x509-ocsp"
 version = "0.2.0-pre"
 dependencies = [
  "const-oid 0.9.5",
- "der 0.7.8",
+ "der 0.8.0",
  "hex-literal 0.4.1",
  "spki",
  "x509-cert",
@@ -1865,7 +1857,7 @@ version = "0.1.0"
 dependencies = [
  "cmpv2",
  "cms",
- "der 0.7.8",
+ "der 0.8.0",
  "hex-literal 0.4.1",
  "x509-cert",
 ]
