@@ -101,7 +101,12 @@ impl<'a> DecodeValue<'a> for EncryptedPrivateKeyInfo<'a> {
         reader: &mut R,
         header: Header,
     ) -> der::Result<EncryptedPrivateKeyInfo<'a>> {
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             Ok(Self {
                 encryption_algorithm: reader.decode()?,
                 encrypted_data: OctetStringRef::decode(reader)?.as_bytes(),

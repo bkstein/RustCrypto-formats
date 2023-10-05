@@ -94,7 +94,12 @@ impl<'a> RsaPrivateKey<'a> {
 
 impl<'a> DecodeValue<'a> for RsaPrivateKey<'a> {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> der::Result<Self> {
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             let version = Version::decode(reader)?;
 
             let result = Self {

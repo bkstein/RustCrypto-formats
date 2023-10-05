@@ -124,11 +124,18 @@ where
             Tag::ContextSpecific {
                 number,
                 constructed: true,
-            } => Ok(Self {
-                tag_number: number,
-                tag_mode: TagMode::default(),
-                value: reader.read_nested(header.length, |reader| T::decode(reader))?,
-            }),
+            } => {
+                let length = if header.length.is_definite() {
+                    header.length.try_into()?
+                } else {
+                    reader.indefinite_value_length()?
+                };
+                Ok(Self {
+                    tag_number: number,
+                    tag_mode: TagMode::default(),
+                    value: reader.read_nested(length, |reader| T::decode(reader))?,
+                })
+            }
             tag => Err(tag.unexpected_error(None)),
         }
     }

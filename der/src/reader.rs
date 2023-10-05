@@ -8,16 +8,21 @@ pub(crate) mod slice;
 pub(crate) use nested::NestedReader;
 
 use crate::{
-    asn1::ContextSpecific, Decode, DecodeValue, Encode, Error, ErrorKind, FixedTag, Header,
-    IndefiniteLength, Length, Result, Tag, TagMode, TagNumber,
+    asn1::ContextSpecific, Decode, DecodeValue, Encode, Error, ErrorKind, FixedTag, Header, Length,
+    Result, Tag, TagMode, TagNumber,
 };
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
+use std::ops::Sub;
 
 // Used for reading indefinite length data
+/// Length of end-of-content (eoc) markers
 const EOC_LENGTH: Length = Length::new(2);
+/// end-of-content (eoc) marker
 const EOC_MARKER: &[u8; 2] = &[0u8; 2];
+/// Recursive calls limit for parsing indefinite length values (BER)
+const INDEFINITE_LENGTH_PARSER_RECURSION_MAX: u16 = 1024;
 
 /// Reader trait which reads DER-encoded input.
 pub trait Reader<'r>: Sized {
@@ -39,8 +44,8 @@ pub trait Reader<'r>: Sized {
     /// Get the position within the buffer.
     fn position(&self) -> Length;
 
-    /// Rewind cursor to a given position.
-    fn rewind(&mut self, position: Length) -> Result<()>;
+    /// Rewind cursor by a given offset (`self.position -= offset`).
+    fn rewind(&mut self, offset: Length) -> Result<()>;
 
     /// Are we parsing BER?
     fn is_parsing_ber(&self) -> bool;
@@ -148,17 +153,12 @@ pub trait Reader<'r>: Sized {
         Ok(buf)
     }
 
-    /// Read nested data of the given length.
-    fn read_nested<'n, T, F>(&'n mut self, len: IndefiniteLength, f: F) -> Result<T>
+    /// Read nested data of the given length. Reader's cursor points to the first nested object.
+    fn read_nested<'n, T, F>(&'n mut self, len: Length, f: F) -> Result<T>
     where
         F: FnOnce(&mut NestedReader<'n, Self>) -> Result<T>,
     {
-        let input_length: Length = if len.is_definite() {
-            len.try_into()?
-        } else {
-            self.tlv_length()?
-        };
-        let mut reader = NestedReader::new(self, input_length)?;
+        let mut reader = NestedReader::new(self, len)?;
         let ret = f(&mut reader)?;
         reader.finish(ret)
     }
@@ -202,43 +202,75 @@ pub trait Reader<'r>: Sized {
     {
         let header = Header::decode(self)?;
         header.tag.assert_eq(Tag::Sequence)?;
-        self.read_nested(header.length, f)
+
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            self.indefinite_value_length()?
+        };
+
+        self.read_nested(length, f)
     }
 
     /// Obtain a slice of bytes contain a complete TLV production suitable for parsing later.
     fn tlv_bytes(&mut self) -> Result<&'r [u8]> {
         let header = self.peek_header()?;
         let header_len = header.encoded_len()?;
-        let tlv_len = if header.length.is_definite() {
-            (header_len + Length::try_from(header.length)?)?
+        let value_len = if header.length.is_definite() {
+            Length::try_from(header.length)?
         } else {
-            self.tlv_length()?
+            self.indefinite_value_length()?.sub(EOC_LENGTH)?
         };
-        self.read_slice(tlv_len)
+        self.read_slice((header_len + value_len)?)
     }
 
-    /// Parse a tlv and return its length. Don't move the reader's cursor.
-    /// This is required if the length is indefinite.
-    fn tlv_length(&mut self) -> Result<Length> {
+    /// Parse the value of an indefinite tlv container object (sequence, set, strings, any) and
+    /// return its length including the two eoc (end-of-content) bytes. Reader's position is the
+    /// first value byte. The reader's position is rewound to the start position before the method
+    /// returns.
+    /// Note: this method expects a terminating eoc marker and won't work for definite length
+    /// objects.
+    fn indefinite_value_length(&mut self) -> Result<Length> {
         let start_position = self.position();
+        // TODO bk remove
+        std::println!("Saved start position: {}", start_position);
 
-        self.tlv_length_parse_to_end()?;
+        self.indefinite_value_length_parse_to_end(0)?;
 
         let length = self.position().saturating_sub(start_position);
-        self.rewind(start_position)?;
-        Ok(length)
+        self.rewind(length)?;
+
+        // TODO bk remove
+        std::println!("Value length is {}", (length + EOC_LENGTH)?);
+        Ok((length + EOC_LENGTH)?)
     }
 
     /// Advance cursor to the end of a tlv. This method works for definite and (nested) indefinite
     /// length values.
-    fn tlv_length_parse_to_end(&mut self) -> Result<()> {
+    fn indefinite_value_length_parse_to_end(&mut self, recursion_depth: u16) -> Result<()> {
+        if recursion_depth > INDEFINITE_LENGTH_PARSER_RECURSION_MAX {
+            return Err(self.error(ErrorKind::RecursionLimitExceeded));
+        }
+        // TODO bk remove
+        std::println!("tlv_length_parse_to_end: recursion depth is {recursion_depth}");
+        std::println!("tlv_length_parse_to_end: starting loop");
         loop {
             let header = self.peek_header()?;
+            // TODO bk remove
+            std::println!(
+                "tlv_length_parse_to_end: @{:0}: {}/{}",
+                self.position(),
+                header.tag,
+                header.length
+            );
+
             if header.length.is_indefinite() {
                 // indefinite length: value must be parsed
                 let _ = Header::decode(self)?;
-                self.tlv_length_parse_to_end()?;
-                self.read_eoc()?;
+                self.indefinite_value_length_parse_to_end(recursion_depth + 1)?;
+                if !self.read_eoc()? {
+                    return Err(self.error(ErrorKind::EndOfContent));
+                };
             } else {
                 let _ = self.tlv_bytes()?;
             }
@@ -246,6 +278,8 @@ pub trait Reader<'r>: Sized {
                 break;
             }
         }
+        // TODO bk remove
+        std::println!("tlv_length_parse_to_end: closing loop");
         Ok(())
     }
 }

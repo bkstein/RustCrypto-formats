@@ -2,7 +2,7 @@
 
 use cms::content_info::ContentInfo;
 use cms::signed_data::{SignedData, SignerInfos};
-use der::{AnyRef, Decode, DecodePem, Encode, ErrorKind, Tag};
+use der::{AnyRef, Decode, DecodePem, Encode, ErrorKind, Tag, Tagged};
 use x509_cert::Certificate;
 
 #[test]

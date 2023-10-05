@@ -179,7 +179,12 @@ impl<'a> Default for RsaPssParams<'a> {
 
 impl<'a> DecodeValue<'a> for RsaPssParams<'a> {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: der::Header) -> der::Result<Self> {
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             Ok(Self {
                 hash: reader
                     .context_specific(TagNumber::N0, TagMode::Explicit)?
@@ -343,7 +348,12 @@ impl<'a> Default for RsaOaepParams<'a> {
 
 impl<'a> DecodeValue<'a> for RsaOaepParams<'a> {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: der::Header) -> der::Result<Self> {
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             Ok(Self {
                 hash: reader
                     .context_specific(TagNumber::N0, TagMode::Explicit)?

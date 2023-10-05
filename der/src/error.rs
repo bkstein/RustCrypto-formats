@@ -165,6 +165,9 @@ pub enum ErrorKind {
     /// Date-and-time related errors.
     DateTime,
 
+    /// Unexpected definite length encountered.
+    DefiniteLength,
+
     /// Invalid or missing end-of-content octets of indefinite length content.
     EndOfContent,
 
@@ -253,6 +256,9 @@ pub enum ErrorKind {
     /// Reader does not support the requested operation.
     Reader,
 
+    /// Recursion limit exceeded
+    RecursionLimitExceeded,
+
     /// Unknown tag mode.
     TagModeUnknown,
 
@@ -312,6 +318,7 @@ impl fmt::Display for ErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ErrorKind::DateTime => write!(f, "date/time error"),
+            ErrorKind::DefiniteLength => write!(f, "unexpected definite length header encountered"),
             ErrorKind::EndOfContent => write!(f, "invalid or missing end-of-content octets"),
             ErrorKind::Failed => write!(f, "operation failed"),
             #[cfg(feature = "std")]
@@ -345,6 +352,7 @@ impl fmt::Display for ErrorKind {
             #[cfg(feature = "std")]
             ErrorKind::PermissionDenied => write!(f, "permission denied"),
             ErrorKind::Reader => write!(f, "reader does not support the requested operation"),
+            ErrorKind::RecursionLimitExceeded => write!(f, "BER contains too many nested values"),
             ErrorKind::TagModeUnknown => write!(f, "unknown tag mode"),
             ErrorKind::TagNumberInvalid => write!(f, "invalid tag number"),
             ErrorKind::TagUnexpected { expected, actual } => {

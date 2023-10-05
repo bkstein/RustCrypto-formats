@@ -67,7 +67,12 @@ where
     T: Decode<'a>,
 {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             let mut sequence_of = Self::new();
 
             while !reader.is_finished() {
@@ -183,7 +188,12 @@ where
     T: Decode<'a>,
 {
     fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             let mut sequence_of = Self::new();
 
             while !reader.is_finished() {

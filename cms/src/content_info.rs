@@ -47,13 +47,53 @@ impl ValueOrd for CmsVersion {
 /// ```
 ///
 /// [RFC 5652 Section 3]: https://www.rfc-editor.org/rfc/rfc5652#section-3
-#[derive(Clone, Debug, Eq, PartialEq, Sequence)]
+// TODO bk revert this line #[derive(Clone, Debug, Eq, PartialEq, Sequence)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[allow(missing_docs)]
 pub struct ContentInfo {
     pub content_type: ObjectIdentifier,
-    #[asn1(context_specific = "0", tag_mode = "EXPLICIT")]
+    // TODO bk revert #[asn1(context_specific = "0", tag_mode = "EXPLICIT")]
     pub content: Any,
 }
+
+// TODO bk replace with derived version
+impl<'a> der::DecodeValue<'a> for ContentInfo {
+    fn decode_value<R: der::Reader<'a>>(reader: &mut R, header: der::Header) -> der::Result<Self> {
+        use der::Reader as _;
+
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
+            let content_type = reader.decode()?;
+            let content = reader.decode()?;
+
+            Ok(Self {
+                content_type,
+                content,
+            })
+        })
+    }
+}
+
+impl ::der::EncodeValue for ContentInfo {
+    fn value_len(&self) -> der::Result<der::Length> {
+        use der::Encode as _;
+        [self.content_type.encoded_len()?, self.content.encoded_len()?]
+            .into_iter()
+            .try_fold(::der::Length::ZERO, |acc, len| acc + len)
+    }
+    fn encode_value(&self, writer: &mut impl ::der::Writer) -> der::Result<()> {
+        use der::Encode as _;
+        self.content_type.encode(writer)?;
+        self.content.encode(writer)?;
+        Ok(())
+    }
+}
+
+impl<'a> Sequence<'a> for ContentInfo {}
 
 /// Convert a Certificate to a certs-only SignedData message
 impl TryFrom<Certificate> for ContentInfo {

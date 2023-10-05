@@ -83,7 +83,12 @@ impl<'a> DecodeValue<'a> for ContentInfo<'a> {
                 .value)
         }
 
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             let content_type = reader.decode()?;
             match content_type {
                 ContentType::Data => Ok(ContentInfo::Data(decode_context_specific(reader)?)),

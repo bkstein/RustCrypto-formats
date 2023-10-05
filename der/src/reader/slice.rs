@@ -1,6 +1,7 @@
 //! Slice reader.
 
 use crate::{BytesRef, Decode, Error, ErrorKind, Header, Length, Reader, Result, Tag};
+use std::ops::Sub;
 
 /// [`Reader`] which consumes an input byte slice.
 #[derive(Clone, Debug)]
@@ -100,11 +101,12 @@ impl<'a> Reader<'a> for SliceReader<'a> {
         self.position
     }
 
-    fn rewind(&mut self, len: Length) -> Result<()> {
-        if len > self.input_len() {
+    fn rewind(&mut self, offset: Length) -> Result<()> {
+        if offset > self.position() {
             Err(self.error(ErrorKind::Overlength))
         } else {
-            self.position = len;
+            self.position = self.position.sub(offset)?;
+            std::println!("Rewound slice reader to {}", self.position);
             Ok(())
         }
     }

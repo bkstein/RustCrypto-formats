@@ -443,6 +443,7 @@ version = "0.8.0"
 dependencies = [
  "arbitrary",
  "bytes",
+ "cms",
  "const-oid 0.9.5",
  "der_derive",
  "flagset",

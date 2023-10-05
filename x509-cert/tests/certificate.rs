@@ -42,7 +42,12 @@ impl<'a> DecodeValue<'a> for DeferDecodeCertificate<'a> {
         reader: &mut R,
         header: Header,
     ) -> der::Result<DeferDecodeCertificate<'a>> {
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             Ok(Self {
                 tbs_certificate: reader.tlv_bytes()?,
                 signature_algorithm: reader.tlv_bytes()?,
@@ -85,7 +90,12 @@ impl<'a> DecodeValue<'a> for DeferDecodeTbsCertificate<'a> {
         reader: &mut R,
         header: Header,
     ) -> der::Result<DeferDecodeTbsCertificate<'a>> {
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             let version = ContextSpecific::decode_explicit(reader, ::der::TagNumber::N0)?
                 .map(|cs| cs.value)
                 .unwrap_or_else(Default::default);

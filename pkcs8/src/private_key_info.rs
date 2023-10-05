@@ -175,7 +175,12 @@ impl<'a> DecodeValue<'a> for PrivateKeyInfo<'a> {
         reader: &mut R,
         header: Header,
     ) -> der::Result<PrivateKeyInfo<'a>> {
-        reader.read_nested(header.length, |reader| {
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader.read_nested(length, |reader| {
             // Parse and validate `version` INTEGER.
             let version = Version::decode(reader)?;
             let algorithm = reader.decode()?;

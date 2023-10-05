@@ -430,6 +430,15 @@ impl Sub for IndefiniteLength {
     }
 }
 
+impl fmt::Display for IndefiniteLength {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.0 {
+            None => write!(f, "indefinite"),
+            Some(len) => write!(f, "{len}"),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {

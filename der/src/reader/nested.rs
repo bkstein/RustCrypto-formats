@@ -1,6 +1,7 @@
 //! Reader type for consuming nested TLV records within a DER document.
 
 use crate::{reader::Reader, Error, ErrorKind, Header, Length, Result};
+use std::ops::Sub;
 
 /// Reader type used by [`Reader::read_nested`].
 pub struct NestedReader<'i, R> {
@@ -95,11 +96,13 @@ impl<'i, 'r, R: Reader<'r>> Reader<'r> for NestedReader<'i, R> {
         self.position
     }
 
-    fn rewind(&mut self, len: Length) -> Result<()> {
-        if len > self.input_len() {
+    fn rewind(&mut self, offset: Length) -> Result<()> {
+        if offset > self.position() {
             Err(self.error(ErrorKind::Overlength))
         } else {
-            self.position = len;
+            self.position = self.position.sub(offset)?;
+            std::println!("Rewound nested reader to {}", self.position);
+            self.inner.rewind(offset)?;
             Ok(())
         }
     }
