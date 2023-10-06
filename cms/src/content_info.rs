@@ -81,9 +81,12 @@ impl<'a> der::DecodeValue<'a> for ContentInfo {
 impl ::der::EncodeValue for ContentInfo {
     fn value_len(&self) -> der::Result<der::Length> {
         use der::Encode as _;
-        [self.content_type.encoded_len()?, self.content.encoded_len()?]
-            .into_iter()
-            .try_fold(::der::Length::ZERO, |acc, len| acc + len)
+        [
+            self.content_type.encoded_len()?,
+            self.content.encoded_len()?,
+        ]
+        .into_iter()
+        .try_fold(::der::Length::ZERO, |acc, len| acc + len)
     }
     fn encode_value(&self, writer: &mut impl ::der::Writer) -> der::Result<()> {
         use der::Encode as _;

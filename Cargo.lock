@@ -295,19 +295,19 @@ checksum = "cd7cc57abe963c6d3b9d8be5b06ba7c8957a930305ca90304f24ef040aa6f961"
 
 [[package]]
 name = "cmpv2"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "const-oid 0.9.5",
  "crmf",
  "der 0.8.0",
  "hex-literal 0.4.1",
- "spki",
- "x509-cert",
+ "spki 0.8.0",
+ "x509-cert 0.3.0",
 ]
 
 [[package]]
 name = "cms"
-version = "0.2.3"
+version = "0.3.0"
 dependencies = [
  "aes",
  "cbc",
@@ -319,15 +319,15 @@ dependencies = [
  "hex-literal 0.4.1",
  "p256",
  "pem-rfc7468",
- "pkcs5",
+ "pkcs5 0.8.0",
  "rand",
  "rsa",
  "sha1",
  "sha2",
  "sha3",
  "signature",
- "spki",
- "x509-cert",
+ "spki 0.8.0",
+ "x509-cert 0.3.0",
  "zeroize",
 ]
 
@@ -399,13 +399,13 @@ dependencies = [
 
 [[package]]
 name = "crmf"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "cms",
  "const-oid 0.9.5",
  "der 0.8.0",
- "spki",
- "x509-cert",
+ "spki 0.8.0",
+ "x509-cert 0.3.0",
 ]
 
 [[package]]
@@ -438,6 +438,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fffa369a668c8af7dbf8b5e56c9f744fbd399949ed171606040001947de40b1c"
 dependencies = [
  "const-oid 0.9.5",
+ "der_derive 0.7.2",
+ "flagset",
  "pem-rfc7468",
  "zeroize",
 ]
@@ -450,7 +452,7 @@ dependencies = [
  "bytes",
  "cms",
  "const-oid 0.9.5",
- "der_derive",
+ "der_derive 0.8.0",
  "flagset",
  "hex-literal 0.4.1",
  "pem-rfc7468",
@@ -461,7 +463,18 @@ dependencies = [
 
 [[package]]
 name = "der_derive"
-version = "0.7.3"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5fe87ce4529967e0ba1dcf8450bab64d97dfd5010a6256187ffe2e43e6f0e049"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "der_derive"
+version = "0.8.0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -517,7 +530,7 @@ dependencies = [
  "elliptic-curve",
  "rfc6979",
  "signature",
- "spki",
+ "spki 0.7.2",
 ]
 
 [[package]]
@@ -541,7 +554,7 @@ dependencies = [
  "pem-rfc7468",
  "pkcs8 0.10.2",
  "rand_core",
- "sec1",
+ "sec1 0.7.3",
  "subtle",
  "zeroize",
 ]
@@ -741,8 +754,8 @@ version = "0.1.1"
 dependencies = [
  "der 0.8.0",
  "hex-literal 0.4.1",
- "spki",
- "x509-cert",
+ "spki 0.7.2",
+ "x509-cert 0.2.4",
 ]
 
 [[package]]
@@ -975,13 +988,24 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pkcs1"
-version = "0.7.6"
+version = "0.7.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8ffb9f10fa047879315e6625af03c164b16962a5368d724ed16323b68ace47f"
+dependencies = [
+ "der 0.7.8",
+ "pkcs8 0.10.2",
+ "spki 0.7.2",
+]
+
+[[package]]
+name = "pkcs1"
+version = "0.8.0"
 dependencies = [
  "const-oid 0.9.5",
  "der 0.8.0",
  "hex-literal 0.4.1",
  "pkcs8 0.11.0",
- "spki",
+ "spki 0.8.0",
  "tempfile",
 ]
 
@@ -994,19 +1018,35 @@ dependencies = [
  "der 0.8.0",
  "digest",
  "hex-literal 0.3.4",
- "pkcs5",
+ "pkcs5 0.7.1",
  "pkcs8 0.11.0",
  "sha2",
- "spki",
+ "spki 0.8.0",
  "subtle-encoding",
  "whirlpool",
- "x509-cert",
+ "x509-cert 0.3.0",
  "zeroize",
 ]
 
 [[package]]
 name = "pkcs5"
-version = "0.7.2"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e847e2c91a18bfa887dd028ec33f2fe6f25db77db3619024764914affe8b69a6"
+dependencies = [
+ "aes",
+ "cbc",
+ "der 0.7.8",
+ "des",
+ "pbkdf2",
+ "scrypt",
+ "sha2",
+ "spki 0.7.2",
+]
+
+[[package]]
+name = "pkcs5"
+version = "0.8.0"
 dependencies = [
  "aes",
  "cbc",
@@ -1017,17 +1057,17 @@ dependencies = [
  "scrypt",
  "sha1",
  "sha2",
- "spki",
+ "spki 0.8.0",
 ]
 
 [[package]]
 name = "pkcs7"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
  "der 0.8.0",
  "hex-literal 0.4.1",
- "spki",
- "x509-cert",
+ "spki 0.8.0",
+ "x509-cert 0.3.0",
 ]
 
 [[package]]
@@ -1037,7 +1077,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f950b2377845cebe5cf8b5165cb3cc1a5e0fa5cfa3e1f7f55707d8fd82e0a7b7"
 dependencies = [
  "der 0.7.8",
- "spki",
+ "spki 0.7.2",
 ]
 
 [[package]]
@@ -1046,9 +1086,9 @@ version = "0.11.0"
 dependencies = [
  "der 0.8.0",
  "hex-literal 0.4.1",
- "pkcs5",
+ "pkcs5 0.8.0",
  "rand_core",
- "spki",
+ "spki 0.8.0",
  "subtle",
  "tempfile",
 ]
@@ -1218,12 +1258,12 @@ dependencies = [
  "num-integer",
  "num-iter",
  "num-traits",
- "pkcs1",
+ "pkcs1 0.7.5",
  "pkcs8 0.10.2",
  "rand_core",
  "sha2",
  "signature",
- "spki",
+ "spki 0.7.2",
  "subtle",
  "zeroize",
 ]
@@ -1328,7 +1368,21 @@ dependencies = [
 
 [[package]]
 name = "sec1"
-version = "0.7.4"
+version = "0.7.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3e97a565f76233a6003f9f5c54be1d9c5bdfa3eccfb189469f11ec4901c47dc"
+dependencies = [
+ "base16ct",
+ "der 0.7.8",
+ "generic-array",
+ "pkcs8 0.10.2",
+ "subtle",
+ "zeroize",
+]
+
+[[package]]
+name = "sec1"
+version = "0.8.0"
 dependencies = [
  "base16ct",
  "der 0.8.0",
@@ -1479,7 +1533,17 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "spki"
-version = "0.7.3"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d1e996ef02c474957d681f1b05213dfb0abab947b446a62d37770b23500184a"
+dependencies = [
+ "base64ct",
+ "der 0.7.8",
+]
+
+[[package]]
+name = "spki"
+version = "0.8.0"
 dependencies = [
  "arbitrary",
  "base64ct",
@@ -1822,7 +1886,18 @@ dependencies = [
 
 [[package]]
 name = "x509-cert"
-version = "0.2.5"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25eefca1d99701da3a57feb07e5079fc62abba059fc139e98c13bbb250f3ef29"
+dependencies = [
+ "const-oid 0.9.5",
+ "der 0.7.8",
+ "spki 0.7.2",
+]
+
+[[package]]
+name = "x509-cert"
+version = "0.3.0"
 dependencies = [
  "arbitrary",
  "const-oid 0.9.5",
@@ -1836,7 +1911,7 @@ dependencies = [
  "sha1",
  "sha2",
  "signature",
- "spki",
+ "spki 0.8.0",
  "tempfile",
  "x509-cert-test-support",
 ]
@@ -1857,8 +1932,8 @@ dependencies = [
  "const-oid 0.9.5",
  "der 0.8.0",
  "hex-literal 0.4.1",
- "spki",
- "x509-cert",
+ "spki 0.8.0",
+ "x509-cert 0.3.0",
 ]
 
 [[package]]
@@ -1869,7 +1944,7 @@ dependencies = [
  "cms",
  "der 0.8.0",
  "hex-literal 0.4.1",
- "x509-cert",
+ "x509-cert 0.3.0",
 ]
 
 [[package]]

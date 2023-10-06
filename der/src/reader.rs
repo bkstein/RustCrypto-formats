@@ -242,7 +242,8 @@ pub trait Reader<'r>: Sized {
 
         // TODO bk remove
         std::println!("Value length is {}", (length + EOC_LENGTH)?);
-        Ok((length + EOC_LENGTH)?)
+
+        length + EOC_LENGTH
     }
 
     /// Advance cursor to the end of a tlv. This method works for definite and (nested) indefinite

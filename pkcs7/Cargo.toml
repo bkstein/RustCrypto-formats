@@ -1,6 +1,6 @@
 [package]
 name = "pkcs7"
-version = "0.4.2"
+version = "0.5.0"
 description = "DEPRECATED: use the `cms` crate instead"
 authors = ["RustCrypto Developers"]
 license = "Apache-2.0 OR MIT"
@@ -13,13 +13,13 @@ rust-version = "1.65"
 
 [dependencies]
 der = { version = "0.8", features = ["oid"] }
-spki = { version = "0.7" }
-x509-cert = { version = "0.2", default-features = false }
+spki = { version = "0.8" }
+x509-cert = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 der = { version = "0.8", features = ["oid", "pem"] }
 hex-literal = "0.4"
-x509-cert = { version = "0.2", default-features = false, features = ["pem"] }
+x509-cert = { version = "0.3", default-features = false, features = ["pem"] }
 
 [package.metadata.docs.rs]
 all-features = true
