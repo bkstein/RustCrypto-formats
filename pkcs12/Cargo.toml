@@ -25,7 +25,7 @@ zeroize = "1.6.0"
 
 [dev-dependencies]
 hex-literal = "0.3.3"
-pkcs8 = { version = "0.10.2", features = ["pkcs5", "getrandom"] }
+pkcs8 = { version = "0.10.3", features = ["pkcs5", "getrandom"] }
 pkcs5 = {version = "0.7.1", features = ["pbes2", "3des"]}
 subtle-encoding = "0.5.1"
 sha2 = "0.10.7"

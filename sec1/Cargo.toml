@@ -19,7 +19,7 @@ rust-version = "1.65"
 base16ct = { version = "0.2", optional = true, default-features = false }
 der = { version = "0.8", optional = true, features = ["oid"] }
 generic-array = { version = "0.14.7", optional = true, default-features = false }
-pkcs8 = { version = "0.10", optional = true, default-features = false }
+pkcs8 = { version = "0.10.3", optional = true, default-features = false }
 serdect = { version = "0.2", optional = true, default-features = false, features = ["alloc"] }
 subtle = { version = "2", optional = true, default-features = false }
 zeroize = { version = "1", optional = true, default-features = false }
