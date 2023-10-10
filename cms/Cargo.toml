@@ -49,7 +49,3 @@ pem = ["alloc", "der/pem"]
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
-
-# TODO(bk): remove before mr
-[patch.crates-io]
-rsa = { git = "https://code.rsint.net/SWP/mirror/crates.io/RustCrypto-RSA", rev = "2b6972b4d88df772b884eadfa42eed137b393c94" }

@@ -61,3 +61,6 @@ tls_codec_derive  = { path = "./tls_codec/derive" }
 x509-tsp               = { path = "./x509-tsp" }
 x509-cert         = { path = "./x509-cert" }
 x509-ocsp         = { path = "./x509-ocsp" }
+
+# TODO(bk): remove before mr
+rsa = { git = "ssh://git@code.rsint.net/SWP/mirror/crates.io/RustCrypto-RSA", rev = "2b6972b4d88df772b884eadfa42eed137b393c94" }

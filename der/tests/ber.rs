@@ -1,4 +1,4 @@
-use der::{asn1::Any, Decode, Tagged};
+use der::{asn1::Any, Decode, Encode, Tagged};
 #[cfg(feature = "derive")]
 use der::{Sequence, ValueOrd};
 
@@ -146,4 +146,7 @@ fn parsing_indefinite_ber_ejbca_cms() {
     let ci = cms::content_info::ContentInfo::from_ber(bytes_ber.as_slice()).unwrap();
     println!("{:?}", ci.content_type);
     println!("{:02x?}", ci.content.value());
+    let content = ci.content;
+    let  sd_der = content.to_der().unwrap();
+    let _signed_data = cms::signed_data::SignedData::from_ber(sd_der.as_slice()).unwrap();
 }
