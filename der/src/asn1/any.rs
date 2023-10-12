@@ -239,18 +239,17 @@ mod allocating {
 
     impl<'a> DecodeValue<'a> for Any {
         fn decode_value<R: Reader<'a>>(reader: &mut R, header: Header) -> Result<Self> {
-            if header.length.is_indefinite() {
+            let length: Length = if header.length.is_indefinite() {
                 if !reader.is_parsing_ber() {
-                    Err(ErrorKind::IndefiniteLength.into())
+                    return Err(ErrorKind::IndefiniteLength.into());
                 } else {
-                    let tag = reader.peek_tag()?;
-                    let value = reader.tlv_bytes()?;
-                    Self::new(tag, value)
+                    reader.indefinite_value_length()?
                 }
             } else {
-                let value = reader.read_vec(header.length.try_into()?)?;
-                Self::new(header.tag, value)
-            }
+                header.length.try_into()?
+            };
+
+            Self::new(header.tag, reader.read_vec(length)?)
         }
     }
 

@@ -144,8 +144,8 @@ fn parsing_indefinite_ber_ejbca_cms() {
     ];
     println!("bytes_ber.len(): {}", bytes_ber.len());
     let ci = cms::content_info::ContentInfo::from_ber(bytes_ber.as_slice()).unwrap();
-    println!("{:?}", ci.content_type);
-    println!("{:02x?}", ci.content.value());
+    println!("content_type: {:?}", ci.content_type);
+    println!("content:      {:?} {:02x?}", ci.content.tag(), ci.content.value());
     let content = ci.content;
     let  sd_der = content.to_der().unwrap();
     let _signed_data = cms::signed_data::SignedData::from_ber(sd_der.as_slice()).unwrap();

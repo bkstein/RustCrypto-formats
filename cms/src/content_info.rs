@@ -6,7 +6,7 @@ use crate::signed_data::EncapsulatedContentInfo;
 use crate::signed_data::{CertificateSet, SignedData, SignerInfos};
 use core::cmp::Ordering;
 use der::asn1::SetOfVec;
-use der::Encode;
+use der::{Decode, Encode};
 use der::{asn1::ObjectIdentifier, Any, AnyRef, Enumerated, Sequence, ValueOrd};
 use x509_cert::{Certificate, PkiPath};
 
@@ -47,12 +47,12 @@ impl ValueOrd for CmsVersion {
 /// ```
 ///
 /// [RFC 5652 Section 3]: https://www.rfc-editor.org/rfc/rfc5652#section-3
-// TODO bk revert this line #[derive(Clone, Debug, Eq, PartialEq, Sequence)]
+// TODO(bk) #[derive(Clone, Debug, Eq, PartialEq, Sequence)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[allow(missing_docs)]
 pub struct ContentInfo {
     pub content_type: ObjectIdentifier,
-    // TODO bk revert #[asn1(context_specific = "0", tag_mode = "EXPLICIT")]
+    // TODO(bk) #[asn1(context_specific = "0", tag_mode = "EXPLICIT")]
     pub content: Any,
 }
 
@@ -68,7 +68,22 @@ impl<'a> der::DecodeValue<'a> for ContentInfo {
         };
         reader.read_nested(length, |reader| {
             let content_type = reader.decode()?;
-            let content = reader.decode()?;
+            let content = match ::der::asn1::ContextSpecific::decode(
+                reader,
+            )? {
+                field if field.tag_number == ::der::TagNumber::N0 => {
+                    Some(field)
+                }
+                _ => None,
+            }
+                .ok_or_else(|| {
+                    der::Tag::ContextSpecific {
+                        number: ::der::TagNumber::N0,
+                        constructed: false,
+                    }
+                        .value_error()
+                })?
+                .value;
 
             Ok(Self {
                 content_type,
@@ -83,7 +98,12 @@ impl ::der::EncodeValue for ContentInfo {
         use der::Encode as _;
         [
             self.content_type.encoded_len()?,
-            self.content.encoded_len()?,
+            ::der::asn1::ContextSpecificRef {
+                tag_number: ::der::TagNumber::N0,
+                tag_mode: ::der::TagMode::Explicit,
+                value: &self.content,
+            }
+                .encoded_len()?,
         ]
         .into_iter()
         .try_fold(::der::Length::ZERO, |acc, len| acc + len)
@@ -91,7 +111,12 @@ impl ::der::EncodeValue for ContentInfo {
     fn encode_value(&self, writer: &mut impl ::der::Writer) -> der::Result<()> {
         use der::Encode as _;
         self.content_type.encode(writer)?;
-        self.content.encode(writer)?;
+        ::der::asn1::ContextSpecificRef {
+            tag_number: ::der::TagNumber::N0,
+            tag_mode: ::der::TagMode::Explicit,
+            value: &self.content,
+        }
+            .encode(writer)?;
         Ok(())
     }
 }

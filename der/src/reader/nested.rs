@@ -59,10 +59,6 @@ impl<'i, 'r, R: Reader<'r>> Reader<'r> for NestedReader<'i, R> {
     /// Get the number of bytes still remaining in the buffer or inner buffer remaining_len when
     /// parsing BER
     fn remaining_len(&self) -> Length {
-        if self.is_parsing_ber() {
-            return self.inner.remaining_len();
-        }
-
         debug_assert!(self.position() <= self.input_len());
         self.input_len().saturating_sub(self.position())
     }
