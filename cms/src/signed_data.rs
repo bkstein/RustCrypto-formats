@@ -25,19 +25,128 @@ use x509_cert::impl_newtype;
 /// ```
 ///
 /// [RFC 5652 Section 5.1]: https://www.rfc-editor.org/rfc/rfc5652#section-5.1
-#[derive(Clone, Debug, Eq, PartialEq, Sequence)]
+// TODO(bk) revert after debugging #[derive(Clone, Debug, Eq, PartialEq, Sequence)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[allow(missing_docs)]
 pub struct SignedData {
     pub version: CmsVersion,
     pub digest_algorithms: DigestAlgorithmIdentifiers,
     pub encap_content_info: EncapsulatedContentInfo,
     //todo consider defer decoding certs and CRLs
-    #[asn1(context_specific = "0", tag_mode = "IMPLICIT", optional = "true")]
+    // TODO(bk) revert after debugging #[asn1(context_specific = "0", tag_mode = "IMPLICIT", optional = "true")]
     pub certificates: Option<CertificateSet>,
-    #[asn1(context_specific = "1", tag_mode = "IMPLICIT", optional = "true")]
+    // TODO(bk) revert after debugging #[asn1(context_specific = "1", tag_mode = "IMPLICIT", optional = "true")]
     pub crls: Option<RevocationInfoChoices>,
     pub signer_infos: SignerInfos,
 }
+
+// TODO(bk) revert after debugging
+impl<'__der_lifetime> ::der::DecodeValue<'__der_lifetime> for SignedData {
+    fn decode_value<R: ::der::Reader<'__der_lifetime>>(
+        reader: &mut R,
+        header: ::der::Header,
+    ) -> ::der::Result<Self> {
+        use ::der::{Decode as _, DecodeValue as _, Reader as _};
+        let length = if header.length.is_definite() {
+            header.length.try_into()?
+        } else {
+            reader.indefinite_value_length()?
+        };
+        reader
+            .read_nested(
+                length,
+                |reader| {
+                    let version = reader.decode()?;
+                    let digest_algorithms = reader.decode()?;
+                    let encap_content_info = reader.decode()?;
+                    let certificates = ::der::asn1::ContextSpecific::decode_implicit(
+                        reader,
+                        ::der::TagNumber::N0,
+                    )?
+                        .map(|cs| cs.value);
+                    let crls = ::der::asn1::ContextSpecific::decode_implicit(
+                        reader,
+                        ::der::TagNumber::N1,
+                    )?
+                        .map(|cs| cs.value);
+                    let signer_infos = reader.decode()?;
+                    Ok(Self {
+                        version,
+                        digest_algorithms,
+                        encap_content_info,
+                        certificates,
+                        crls,
+                        signer_infos,
+                    })
+                },
+            )
+    }
+}
+impl<'__der_lifetime> ::der::EncodeValue for SignedData {
+    fn value_len(&self) -> ::der::Result<::der::Length> {
+        use ::der::Encode as _;
+        [
+            self.version.encoded_len()?,
+            self.digest_algorithms.encoded_len()?,
+            self.encap_content_info.encoded_len()?,
+            self
+                .certificates
+                .as_ref()
+                .map(|field| {
+                    ::der::asn1::ContextSpecificRef {
+                        tag_number: ::der::TagNumber::N0,
+                        tag_mode: ::der::TagMode::Implicit,
+                        value: field,
+                    }
+                })
+                .encoded_len()?,
+            self
+                .crls
+                .as_ref()
+                .map(|field| {
+                    ::der::asn1::ContextSpecificRef {
+                        tag_number: ::der::TagNumber::N1,
+                        tag_mode: ::der::TagMode::Implicit,
+                        value: field,
+                    }
+                })
+                .encoded_len()?,
+            self.signer_infos.encoded_len()?,
+        ]
+            .into_iter()
+            .try_fold(::der::Length::ZERO, |acc, len| acc + len)
+    }
+    fn encode_value(&self, writer: &mut impl ::der::Writer) -> ::der::Result<()> {
+        use ::der::Encode as _;
+        self.version.encode(writer)?;
+        self.digest_algorithms.encode(writer)?;
+        self.encap_content_info.encode(writer)?;
+        self.certificates
+            .as_ref()
+            .map(|field| {
+                ::der::asn1::ContextSpecificRef {
+                    tag_number: ::der::TagNumber::N0,
+                    tag_mode: ::der::TagMode::Implicit,
+                    value: field,
+                }
+            })
+            .encode(writer)?;
+        self.crls
+            .as_ref()
+            .map(|field| {
+                ::der::asn1::ContextSpecificRef {
+                    tag_number: ::der::TagNumber::N1,
+                    tag_mode: ::der::TagMode::Implicit,
+                    value: field,
+                }
+            })
+            .encode(writer)?;
+        self.signer_infos.encode(writer)?;
+        Ok(())
+    }
+}
+impl<'__der_lifetime> ::der::Sequence<'__der_lifetime> for SignedData {}
+
 
 /// The `DigestAlgorithmIdentifiers` type is defined in [RFC 5652 Section 5.1].
 ///

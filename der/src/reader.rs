@@ -219,13 +219,13 @@ pub trait Reader<'r>: Sized {
         let value_len = if header.length.is_definite() {
             Length::try_from(header.length)?
         } else {
-            self.indefinite_value_length()?.sub(EOC_LENGTH)?
+            (self.indefinite_value_length()? + EOC_LENGTH)?
         };
         self.read_slice((header_len + value_len)?)
     }
 
     /// Parse the value of an indefinite tlv container object (sequence, set, strings, any) and
-    /// return its length including the two eoc (end-of-content) bytes. Reader's position is the
+    /// return its length excluding the two eoc (end-of-content) bytes. Reader's position is the
     /// first value byte. The reader's position is rewound to the start position before the method
     /// returns.
     /// Note: this method expects a terminating eoc marker and won't work for definite length
@@ -241,9 +241,9 @@ pub trait Reader<'r>: Sized {
         self.rewind(length)?;
 
         // TODO bk remove
-        std::println!("Value length is {}", (length + EOC_LENGTH)?);
+        std::println!("Value length is {}", length);
 
-        length + EOC_LENGTH
+        Ok(length)
     }
 
     /// Advance cursor to the end of a tlv. This method works for definite and (nested) indefinite
