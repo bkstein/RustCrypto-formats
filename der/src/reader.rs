@@ -14,7 +14,6 @@ use crate::{
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
-use std::ops::Sub;
 
 // Used for reading indefinite length data
 /// Length of end-of-content (eoc) markers

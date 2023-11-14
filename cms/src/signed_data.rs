@@ -46,7 +46,7 @@ impl<'__der_lifetime> ::der::DecodeValue<'__der_lifetime> for SignedData {
         reader: &mut R,
         header: ::der::Header,
     ) -> ::der::Result<Self> {
-        use ::der::{Decode as _, DecodeValue as _, Reader as _};
+        use ::der::Reader as _;
         let length = if header.length.is_definite() {
             header.length.try_into()?
         } else {
@@ -82,7 +82,7 @@ impl<'__der_lifetime> ::der::DecodeValue<'__der_lifetime> for SignedData {
             )
     }
 }
-impl<'__der_lifetime> ::der::EncodeValue for SignedData {
+impl ::der::EncodeValue for SignedData {
     fn value_len(&self) -> ::der::Result<::der::Length> {
         use ::der::Encode as _;
         [
